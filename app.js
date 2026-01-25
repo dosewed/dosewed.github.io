@@ -1,7 +1,7 @@
 // app.js
 // ✅ 봇 API를 주기적으로 폴링해서 데이터만 갱신 (페이지 전체 새로고침 X)
 
-const API_BASE = "http://115.23.154.100:8787"; // ← 네 봇이 돌아가는 서버 주소로 변경
+const API_BASE = "http://115.23.154.100:41035"; // ← 네 봇이 돌아가는 서버 주소로 변경
 const ENDPOINT = `${API_BASE}/api/market/snapshot`;
 
 const $ = (q) => document.querySelector(q);
@@ -116,3 +116,4 @@ async function fetchSnapshot(){
 // 최초 로드 + 주기 갱신
 fetchSnapshot();
 setInterval(fetchSnapshot, 7000);
+
