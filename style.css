@@ -1,0 +1,644 @@
+:root{
+  --bg0:#070713; --bg1:#0b0b1a; --card:#0f1024cc; --card2:#121335ee;
+  --txt:#eef0ff; --mut:#b4b9ffb3;
+  --bdr:#ffffff14; --bdr2:#ffffff1f;
+  --glow1: 255 77 166; /* pink */
+  --glow2: 120 102 255; /* violet */
+  --glow3: 86 233 255;  /* cyan */
+  --shadow: 0 18px 60px rgba(0,0,0,.45);
+  --shadow2: 0 14px 40px rgba(0,0,0,.35);
+  --r: 22px;
+  --ease: cubic-bezier(.2,.9,.2,1);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family:var(--sans);
+  color:var(--txt);
+  background:
+    radial-gradient(1200px 900px at 15% 10%, rgba(var(--glow1)/.22), transparent 60%),
+    radial-gradient(1200px 900px at 85% 15%, rgba(var(--glow2)/.22), transparent 60%),
+    radial-gradient(900px 700px at 60% 90%, rgba(var(--glow3)/.18), transparent 60%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow-x:hidden;
+}
+
+/* ✅ 배경 레이어 */
+.bg{
+  position:fixed; inset:0; z-index:-3; pointer-events:none;
+  background:
+    radial-gradient(900px 600px at 20% 20%, rgba(var(--glow1)/.12), transparent 55%),
+    radial-gradient(900px 600px at 80% 20%, rgba(var(--glow2)/.12), transparent 55%),
+    radial-gradient(900px 600px at 55% 80%, rgba(var(--glow3)/.10), transparent 55%);
+  filter:saturate(1.05) contrast(1.02);
+}
+
+.noise{
+  position:fixed; inset:-20%; z-index:-2; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.26'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay; opacity:.10; transform:rotate(6deg);
+}
+
+/* ✅ 파티클 캔버스 */
+#fxCanvas{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+}
+
+/* ✅ 커서(선택) */
+.cursor{
+  position:fixed; left:0; top:0;
+  width:18px; height:18px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow: 0 0 0 10px rgba(var(--glow1)/.10);
+  transform: translate(-50%,-50%);
+  pointer-events:none;
+  z-index: 999;
+  mix-blend-mode: screen;
+  opacity:.0;
+  transition: opacity .2s var(--ease), width .2s var(--ease), height .2s var(--ease);
+}
+.cursor.on{opacity:1}
+.cursor.click{width:12px; height:12px}
+
+/* ✅ 탑바 */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; gap:14px; align-items:center; justify-content:space-between;
+  padding:14px 16px;
+  backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(10,10,24,.72), rgba(10,10,24,.38));
+  border-bottom:1px solid var(--bdr);
+}
+
+.brand{display:flex; gap:12px; align-items:center}
+.logo{
+  width:44px; height:44px; display:grid; place-items:center;
+  border-radius:14px;
+  background: linear-gradient(135deg, rgba(var(--glow1)/.22), rgba(var(--glow2)/.18));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: var(--shadow2);
+  transform: translateZ(0);
+}
+.title h1{margin:0; font-size:16px; letter-spacing:.2px}
+.title p{margin:2px 0 0; color:var(--mut); font-size:12px}
+
+.actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+/* ✅ 버튼 */
+.btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(135deg, rgba(var(--glow2)/.14), rgba(var(--glow1)/.10));
+  color:var(--txt);
+  padding:10px 12px;
+  border-radius:14px;
+  cursor:pointer;
+  transition: transform .15s var(--ease), border-color .15s var(--ease), background .15s var(--ease);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  user-select:none;
+}
+.btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.24)}
+.btn:active{transform: translateY(0px) scale(.99)}
+.btn.ghost{background: rgba(255,255,255,.06); box-shadow:none;}
+.btn.big{width:100%; padding:14px 14px; font-size:14px; border-radius:16px}
+.btn[disabled]{opacity:.55; cursor:not-allowed}
+
+/* ✅ 컨테이너/상태바 */
+.container{max-width:1100px; margin:0 auto; padding:14px 16px 40px}
+
+.statusbar{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:12px; margin:14px 0 14px;
+}
+.status{
+  display:flex; gap:10px; align-items:center;
+  padding:10px 12px;
+  border-radius:16px;
+  background: rgba(255,255,255,.06);
+  border:1px solid var(--bdr);
+  box-shadow: var(--shadow2);
+}
+.status .dot{
+  width:10px; height:10px; border-radius:999px;
+  background: rgba(var(--glow3)/.85);
+  box-shadow: 0 0 0 4px rgba(var(--glow3)/.12);
+  flex:0 0 auto;
+}
+.status.loading .dot{animation: pulse 1.1s var(--ease) infinite;}
+@keyframes pulse{
+  0%{transform:scale(.92); opacity:.65}
+  50%{transform:scale(1.08); opacity:1}
+  100%{transform:scale(.92); opacity:.65}
+}
+
+.chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+.chip{
+  padding:9px 11px; border-radius:999px;
+  background: rgba(255,255,255,.05);
+  border:1px solid var(--bdr);
+  color: var(--mut);
+  font-size:12px;
+}
+.chip strong{color:var(--txt)}
+.chip.ok{border-color: rgba(var(--glow3)/.22)}
+.chip.bad{border-color: rgba(255,92,92,.22)}
+
+/* ✅ 툴바(검색/정렬/자동새로고침) */
+.toolbar{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin: 12px 0 18px;
+}
+.input, .select{
+  flex:1 1 220px;
+  min-width: 180px;
+  padding:11px 12px;
+  border-radius:16px;
+  border:1px solid var(--bdr);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+  outline:none;
+  box-shadow: var(--shadow2);
+}
+.select{flex:0 0 160px}
+.input::placeholder{color: rgba(255,255,255,.42)}
+
+.toggle{
+  display:flex; gap:10px; align-items:center;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid var(--bdr);
+  background: rgba(255,255,255,.06);
+  box-shadow: var(--shadow2);
+  color:var(--mut); font-size:12px;
+  flex:0 0 auto;
+  cursor:pointer;
+  user-select:none;
+}
+.toggle input{accent-color: rgb(var(--glow1)); cursor:pointer}
+.spacer{flex:1 1 auto}
+
+/* ✅ 그리드/카드 */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+@media (max-width: 860px){
+  .grid{grid-template-columns: repeat(6, 1fr)}
+}
+@media (max-width: 520px){
+  .grid{grid-template-columns: repeat(1, 1fr)}
+}
+
+.card{
+  grid-column: span 4;
+  padding: 14px 14px 12px;
+  border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border:1px solid var(--bdr);
+  box-shadow: var(--shadow);
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transform: translateY(10px);
+  opacity:0;
+  animation: rise .55s var(--ease) forwards;
+  will-change: transform;
+}
+@media (max-width: 860px){ .card{grid-column: span 3;} }
+@media (max-width: 520px){ .card{grid-column: span 1;} }
+
+@keyframes rise{
+  to{transform: translateY(0); opacity:1}
+}
+
+.card::before{
+  content:"";
+  position:absolute; inset:-1px;
+  background:
+    radial-gradient(600px 140px at 15% 0%, rgba(var(--glow1)/.18), transparent 55%),
+    radial-gradient(600px 140px at 85% 0%, rgba(var(--glow2)/.18), transparent 55%);
+  opacity:.75;
+  pointer-events:none;
+}
+
+.card::after{
+  content:"";
+  position:absolute; inset:0;
+  background: radial-gradient(500px 220px at var(--mx,50%) var(--my,40%), rgba(255,255,255,.10), transparent 50%);
+  opacity:.0;
+  pointer-events:none;
+  transition: opacity .15s var(--ease);
+}
+.card:hover::after{opacity:1}
+
+.name{position:relative; font-size:16px; font-weight:800; letter-spacing:.2px}
+.meta{position:relative; margin-top:6px; color:var(--mut); font-size:12px}
+.bio{
+  position:relative;
+  margin:10px 0 0;
+  color: rgba(255,255,255,.82);
+  font-size:13px;
+  line-height:1.5;
+  min-height: 38px;
+  display:-webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow:hidden;
+}
+
+.badge{
+  position:relative;
+  margin-top:12px;
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  border-radius:14px;
+  padding:10px 12px;
+  background: rgba(0,0,0,.26);
+  border:1px solid rgba(255,255,255,.10);
+  color: var(--mut);
+  font-size:12px;
+}
+
+.badge code{
+  font-family: var(--mono);
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.08);
+  padding:4px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.badge .mini{
+  opacity:.9;
+  font-size:11px;
+  padding:5px 8px;
+  border-radius:999px;
+  background: rgba(var(--glow3)/.10);
+  border:1px solid rgba(var(--glow3)/.18);
+  color: rgba(255,255,255,.82);
+}
+
+/* ✅ 스켈레톤 */
+.skel{
+  grid-column: span 4;
+  height: 150px;
+  border-radius: var(--r);
+  border: 1px solid var(--bdr);
+  background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.08), rgba(255,255,255,.04));
+  background-size: 200% 100%;
+  animation: shimmer 1.1s linear infinite;
+}
+@media (max-width: 860px){ .skel{grid-column: span 3;} }
+@media (max-width: 520px){ .skel{grid-column: span 1;} }
+@keyframes shimmer{
+  0%{background-position: 0% 0%}
+  100%{background-position: 200% 0%}
+}
+
+/* ✅ empty */
+.empty{
+  margin-top: 28px;
+  padding: 22px;
+  border-radius: var(--r);
+  border: 1px solid var(--bdr);
+  background: rgba(255,255,255,.05);
+  box-shadow: var(--shadow2);
+  text-align:center;
+}
+.empty h2{margin:0 0 6px}
+.empty p{margin:0; color:var(--mut)}
+
+.hidden{display:none !important}
+
+/* ✅ 모달 */
+.modal{
+  position:fixed; inset:0; z-index:100;
+  display:grid; place-items:center;
+  padding:16px;
+}
+.modal-backdrop{
+  position:absolute; inset:0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+}
+.modal-card{
+  position:relative;
+  width:min(520px, 100%);
+  border-radius: 22px;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg, rgba(20,20,44,.92), rgba(12,12,26,.92));
+  box-shadow: var(--shadow);
+  padding: 16px;
+  transform: translateY(10px) scale(.985);
+  opacity:0;
+  animation: pop .25s var(--ease) forwards;
+  overflow:hidden;
+}
+@keyframes pop{
+  to{transform: translateY(0) scale(1); opacity:1}
+}
+.modal-card::before{
+  content:"";
+  position:absolute; inset:-1px;
+  background:
+    radial-gradient(600px 280px at 12% 0%, rgba(var(--glow1)/.16), transparent 60%),
+    radial-gradient(600px 280px at 88% 0%, rgba(var(--glow2)/.16), transparent 60%);
+  pointer-events:none;
+  opacity:.9;
+}
+.modal-card > *{position:relative}
+.muted{color:var(--mut); font-size:13px}
+.modal-footer{display:flex; justify-content:flex-end; margin-top:12px}
+.gender-buttons{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+@media (max-width:520px){ .gender-buttons{grid-template-columns:1fr} }
+
+/* ✅ 프로필 모달 */
+.modal-card.profile{width:min(640px, 100%)}
+.profile-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px}
+.profile-head h2{margin:0}
+.profile-body{margin-top:10px}
+
+.row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  margin-top:10px;
+  gap:12px;
+}
+.label{color:var(--mut); font-size:12px}
+.value{font-size:13px}
+
+.codebox{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  margin-top:12px;
+  padding: 12px 12px;
+  border-radius: 18px;
+  background: rgba(0,0,0,.26);
+  border:1px solid rgba(255,255,255,.12);
+}
+.code-left{display:flex; flex-direction:column; gap:5px}
+.code-label{color:var(--mut); font-size:12px}
+.code{
+  font-family: var(--mono);
+  font-weight:800;
+  letter-spacing:.6px;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  padding:8px 10px;
+  border-radius: 14px;
+  display:inline-block;
+  min-width: 140px;
+  text-align:center;
+}
+
+.hint{
+  margin-top: 12px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: rgba(var(--glow3)/.08);
+  border: 1px solid rgba(var(--glow3)/.14);
+  color: rgba(255,255,255,.88);
+  font-size:12px;
+  line-height:1.5;
+}
+.hint code{
+  font-family: var(--mono);
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  padding:2px 6px;
+  border-radius:10px;
+}
+
+/* ✅ 토스트 */
+.toast{
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: var(--shadow2);
+  color: rgba(255,255,255,.92);
+  z-index: 120;
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+}
+
+/* ✅ 접근성/모션 줄이기 */
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .status.loading .dot{animation:none}
+}
+
+/* =========================
+   🍡 몽글몽글(젤리/버블) 카드 효과
+   - 기존 디자인은 유지
+   - hover만 말랑 + 버블 둥둥
+========================= */
+
+/* 카드 자체는 살짝 더 부드럽게 */
+.card{
+  transition:
+    transform .28s var(--ease),
+    box-shadow .28s var(--ease),
+    border-color .28s var(--ease),
+    filter .28s var(--ease);
+}
+
+/* hover 시 젤리처럼 말랑하게 */
+.card:hover{
+  transform: translateY(-2px) scale(1.015);
+  filter: saturate(1.03);
+}
+
+/* 클릭(눌림)도 말랑하게 */
+.card:active{
+  transform: translateY(-1px) scale(0.995);
+}
+
+/* 버블 레이어(아주 은은하게) */
+.card .bubbles{
+  position:absolute;
+  inset:-30px;
+  pointer-events:none;
+  overflow:hidden;
+  opacity:0;
+  transition: opacity .2s var(--ease);
+  filter: blur(2px);
+}
+
+.card:hover .bubbles{ opacity: 1; }
+
+/* 버블 3개 */
+.card .bubbles i{
+  position:absolute;
+  display:block;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), rgba(255,255,255,0) 65%),
+    radial-gradient(circle at 55% 60%, rgba(var(--glow3)/.18), rgba(255,255,255,0) 70%),
+    radial-gradient(circle at 40% 40%, rgba(var(--glow1)/.14), rgba(255,255,255,0) 72%);
+  opacity:.9;
+  transform: translate3d(0,0,0);
+  animation: bubbleFloat 4.8s var(--ease) infinite;
+}
+
+/* 각각 크기/위치/속도 다르게 */
+.card .bubbles i:nth-child(1){
+  width: 90px; height: 90px;
+  left: -10px; top: 18px;
+  animation-duration: 5.4s;
+}
+.card .bubbles i:nth-child(2){
+  width: 120px; height: 120px;
+  right: -24px; top: 42px;
+  animation-duration: 6.2s;
+  animation-delay: .2s;
+}
+.card .bubbles i:nth-child(3){
+  width: 110px; height: 110px;
+  left: 34%; bottom: -30px;
+  animation-duration: 6.8s;
+  animation-delay: .35s;
+}
+/* =========================
+   🍮 Jelly Glass Hover Effect
+   - 둥둥 ❌
+   - 자연스러운 확대 ⭕
+   - 말랑한 젤리 질감 ⭕
+========================= */
+
+.card{
+  transform-origin: center;
+  will-change: transform, box-shadow, filter;
+  transition:
+    transform .38s cubic-bezier(.22,1.15,.32,1),
+    box-shadow .38s cubic-bezier(.22,1.15,.32,1),
+    filter .38s ease,
+    border-color .38s ease;
+}
+
+/* 살짝 확대 + 젤리 느낌 */
+.card:hover{
+  transform: scale(1.025);
+  filter: saturate(1.04) brightness(1.03);
+  border-color: rgba(255,255,255,.28);
+  box-shadow:
+    0 26px 80px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+/* 클릭 시 말랑하게 눌림 */
+.card:active{
+  transform: scale(0.985);
+  transition-duration: .18s;
+}
+
+/* 하이라이트가 같이 늘어나는 느낌 */
+.card::after{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      420px 220px at 50% 0%,
+      rgba(255,255,255,.18),
+      transparent 60%
+    );
+  opacity:.0;
+  pointer-events:none;
+  transition:
+    opacity .28s ease,
+    transform .38s cubic-bezier(.22,1.15,.32,1);
+  transform: scale(.96);
+}
+
+.card:hover::after{
+  opacity:.85;
+  transform: scale(1);
+}
+
+/* 모션 최소화 접근성 */
+@media (prefers-reduced-motion: reduce){
+  .card,
+  .card:hover,
+  .card:active{
+    transform:none !important;
+    transition:none !important;
+  }
+}
+
+/* =========================
+   ✅ 카드: 자연스러운 젤리 확대 (최종 override)
+   - 둥둥/위로 이동 제거
+   - 확대가 확실히 느껴지게
+   - 말랑한 반발감 easing
+========================= */
+
+/* 등장 애니메이션(rise)이 끝난 뒤에도 translateY가 남지 않게 "기본값" 고정 */
+.card{
+  transform: translateZ(0) scale(1) !important; /* ✅ translateY 제거 */
+  transform-origin: center;
+  will-change: transform, box-shadow, filter, border-color;
+
+  transition:
+    transform .42s cubic-bezier(.18, 1.35, .25, 1),
+    box-shadow .42s cubic-bezier(.18, 1.35, .25, 1),
+    filter .30s ease,
+    border-color .30s ease;
+}
+
+/* ✅ hover: 위로 뜨지 않고 "확대만" */
+.card:hover{
+  transform: translateZ(0) scale(1.06) !important; /* ✅ 여기서 확실히 커짐 */
+  filter: saturate(1.06) brightness(1.035);
+  border-color: rgba(255,255,255,.30);
+  box-shadow:
+    0 28px 90px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(255,255,255,.32);
+}
+
+/* ✅ active: 말랑하게 눌림 */
+.card:active{
+  transform: translateZ(0) scale(1.02) !important; /* ✅ 살짝 눌리는 느낌 */
+  transition-duration: .16s;
+}
+
+/* ✅ 젤리 하이라이트 (질감) */
+.card::after{
+  opacity: 0 !important;          /* 기존 after가 있으면 초기값 통일 */
+  transform: scale(.94) !important;
+  transition:
+    opacity .20s ease,
+    transform .42s cubic-bezier(.18, 1.35, .25, 1) !important;
+}
+
+.card:hover::after{
+  opacity: .95 !important;
+  transform: scale(1) !important;
+}
+
+/* 접근성 */
+@media (prefers-reduced-motion: reduce){
+  .card, .card:hover, .card:active{
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+
